@@ -4,11 +4,14 @@ Kursy walut
 Projekt "Kursy walut" to interaktywny dashboard stworzony w R, który prezentuje aktualne dane na temat kursów walut oraz cen złota. Dane są pobierane z API Narodowego Banku Polskiego (NBP). Dashboard umożliwia wizualizację danych w postaci wykresów oraz tabel, co ułatwia analizę i porównanie kursów walut.
 
 Wymagane pakiety
-library(httr)
-library(jsonlite)
-library(ggplot2)
-library(dplyr)
-library(DT)
+ - library(httr)
+ - library(jsonlite)
+ - library(ggplot2)
+ - library(dplyr)
+ - library(DT)
+ - library(RColorBrewer)
+ - library(gridExtra)
+ - library(grid)
 
 Struktura projektu:
 Projekt jest zorganizowany w formie dashboardu z następującymi sekcjami:
