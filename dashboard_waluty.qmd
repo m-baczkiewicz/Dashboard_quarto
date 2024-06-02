@@ -1,0 +1,258 @@
+---
+title: "Kursy walut"
+author: "Michał Bączkiewicz"
+date: "2024-06-02"
+format: 
+  dashboard:
+    orientation: rows
+    nav-buttons: 
+      - twitter
+      - facebook
+---
+# Waluty
+```{r}
+# Ładowanie wymaganych pakietów
+library(httr)
+library(jsonlite)
+library(ggplot2)
+library(dplyr)
+library(DT)
+```
+
+
+```{r}
+#Data
+#aktualna wartosc zlota
+
+url = "http://api.nbp.pl/api/cenyzlota/last/1/"
+response = GET(url)
+data = content(response, "text")
+df = fromJSON(data)
+
+# Upewnijmy się, że mamy poprawne dane
+if (is.data.frame(df) && all(c("data", "cena") %in% names(df))) {
+  gold_price = df$cena[1]
+  gold_date = df$data[1]
+} else {
+  stop("Unexpected API response format for Gold")
+}
+
+#wartosc eur
+url2 = "http://api.nbp.pl/api/exchangerates/rates/a/eur/"
+response = GET(url2)
+data2 = content(response, "text")
+df2 = fromJSON(data2)
+
+```
+
+## column{.tabset}
+```{r}
+#| title: Najpopularniejsze waluty
+# Endpoint API NBP do pobierania aktualnych kursów walut
+url = 'http://api.nbp.pl/api/exchangerates/tables/A?format=json'
+
+# Wykonanie zapytania
+response = GET(url, add_headers('Accept' = 'application/json'))
+
+# Sprawdzenie statusu odpowiedzi
+if (status_code(response) == 200) {
+    # Pobieranie zawartości odpowiedzi
+    data = content(response, as = "text")
+    # Parsowanie danych JSON
+    json_data = fromJSON(data)
+    
+    # Wyodrębnienie kursów walut
+    rates_df = json_data$rates[[1]]
+    
+    top_5 = rates_df %>%
+  arrange(desc(mid)) %>%  # Sortowanie malejąco według kolumny 'mid'
+  head(5)  # Wybranie pierwszych 5 wierszy
+
+
+# Poprawiony wykres
+p = ggplot(top_5, aes(x = reorder(code, -mid), y = mid, fill = code)) +
+  geom_bar(stat = "identity", color = "black", show.legend = FALSE) +
+  labs(
+    title = "Top 5 Kursów Walut NBP",
+    x = "Waluta",
+    y = "Kurs (PLN)",
+    caption = "Źródło danych: NBP"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 0.5, size = 12, face = "bold"),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 14, face = "italic"),
+    axis.title.y = element_text(size = 14, face = "italic"),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 10, face = "italic", hjust = 1)
+  ) +
+  scale_fill_brewer(palette = "greens") +
+  geom_text(aes(label = round(mid, 2)), vjust = -0.3, size = 5, color = "black")
+
+print(p)
+    
+} else {
+  cat("Błąd:", status_code(response), "\n")
+  cat("Treść odpowiedzi:\n", content(response, as = "text"), "\n")
+}
+
+```
+
+```{r}
+#| title: Tabela z wszystkimi walutami
+# Wyświetlenie tabeli z wszystkimi walutami
+datatable(rates_df, options = list(pageLength = 10, autoWidth = TRUE), 
+          colnames = c('Kod Waluty', 'Waluta', 'Średni kurs'))
+
+```
+# Notowania, aktualne wartości
+### column
+#### row
+```{r}
+#| content: valuebox
+#| title: "Aktualna wartość złota"
+list(
+  value = round(gold_price, 2),
+  caption = paste("Cena złota (PLN) na dzień", gold_date),
+  icon = "bank",
+  color = "red"
+)
+```
+
+```{r}
+#| content: valuebox
+#| title: "Aktualna wartość euro"
+list(
+  value = round(df2$rates$mid[1], 2),
+  caption = "Cena EUR (PLN)",
+  icon = "currency-euro",
+  color = "green"
+)
+```
+#### row
+
+```{r}
+url_eur = "http://api.nbp.pl/api/exchangerates/rates/a/eur/last/10/"
+response_eur = GET(url_eur, accept("application/json"))
+content_eur = content(response_eur, "text", encoding = "UTF-8")
+data_eur = fromJSON(content_eur, flatten = TRUE)
+
+# Sprawdzenie struktury danych
+if (is.list(data_eur) && "rates" %in% names(data_eur)) {
+  eur_rates = data_eur$rates$mid
+  eur_dates = data_eur$rates$effectiveDate
+} else {
+  stop("Unexpected API response format for EUR")
+}
+
+# Tworzenie data frame
+df_eur = data.frame(Date = as.Date(eur_dates), Rate = eur_rates)
+
+url_gold = "http://api.nbp.pl/api/cenyzlota/last/10/"
+response_gold = GET(url_gold, accept("application/json"))
+content_gold = content(response_gold, "text", encoding = "UTF-8")
+data_gold = fromJSON(content_gold, flatten = TRUE)
+
+# Sprawdzenie struktury danych
+if (is.data.frame(data_gold) && all(c("data", "cena") %in% names(data_gold))) {
+  gold_prices = data_gold$cena
+  gold_dates = data_gold$data
+} else {
+  stop("Unexpected API response format for Gold")
+}
+
+# Tworzenie data frame
+df_gold = data.frame(Date = as.Date(gold_dates), Price = gold_prices)
+```
+
+###### column{.tabset}
+```{r}
+#| title: Ostatnie 10 notowań kurs EUR do PLN
+# Wykres dla EUR
+ggplot(df_eur, aes(x = Date, y = Rate)) +
+  geom_line(color = "blue") +
+  geom_point() +
+  ggtitle("Kurs EUR do PLN - Ostatnie 10 Notowań") +
+  xlab("Data") +
+  ylab("Kurs średni") +
+  theme_minimal()
+```
+
+
+```{r}
+#| title: Ostatnie 10 notowań ceny złota
+# Wykres dla cen złota
+ggplot(df_gold, aes(x = Date, y = Price)) +
+  geom_line(color = "gold") +
+  geom_point() +
+  ggtitle("Ceny złota - Ostatnie 10 Notowań") +
+  xlab("Data") +
+  ylab("Cena (PLN)") +
+  theme_minimal()
+
+```
+##### column
+```{r}
+url_c = "http://api.nbp.pl/api/exchangerates/rates/c/eur/last/10/"
+response_c = GET(url_c, accept("application/json"))
+content_c = content(response_c, "text", encoding = "UTF-8")
+data_c = fromJSON(content_c, flatten = TRUE)
+
+# Sprawdzenie struktury danych
+if (is.list(data_c) && "rates" %in% names(data_c)) {
+  sell_rates = data_c$rates$ask
+  buy_rates = data_c$rates$bid
+  c_dates = data_c$rates$effectiveDate
+} else {
+  stop("Unexpected API response format for EUR table C")
+}
+
+# Tworzenie data frame
+df_c = data.frame(Date = as.Date(c_dates), SellRate = sell_rates, BuyRate = buy_rates)
+
+ggplot(df_c, aes(x = Date)) +
+  geom_line(aes(y = SellRate, color = "Sell Rate")) +
+  geom_line(aes(y = BuyRate, color = "Buy Rate")) +
+  geom_point(aes(y = SellRate, color = "Sell Rate")) +
+  geom_point(aes(y = BuyRate, color = "Buy Rate")) +
+  ggtitle("Kurs sprzedaży i kupna EUR - Ostatnie 10 Notowań") +
+  xlab("Data") +
+  ylab("Kurs (PLN)") +
+  scale_color_manual(values = c("Sell Rate" = "red", "Buy Rate" = "blue")) +
+  theme_minimal()
+
+```
+### column
+# Opis
+## Row
+
+Projekt: Kursy walut
+
+Opis projektu
+Projekt "Kursy walut" to interaktywny dashboard stworzony w R, który prezentuje aktualne dane na temat kursów walut oraz cen złota. Dane są pobierane z API Narodowego Banku Polskiego (NBP). Dashboard umożliwia wizualizację danych w postaci wykresów oraz tabel, co ułatwia analizę i porównanie kursów walut.
+
+Struktura projektu
+Projekt jest zorganizowany w formie dashboardu z następującymi sekcjami:
+
+1: Waluty
+W tej sekcji znajdują się wizualizacje i dane dotyczące najpopularniejszych walut oraz cen złota.
+
+2: Najpopularniejsze waluty
+W tej sekcji znajdują się wykresy najpopularniejszych walut na podstawie danych z NBP.
+
+3: Tabela z wszystkimi walutami
+Wyświetlenie tabeli z kursami wszystkich walut.
+
+4: Wartości w formie boxów
+Wyświetlenie aktualnej wartości złota i EUR w formie boxów.
+
+5: Ostatnie notowania EUR i złota
+Wykresy przedstawiające ostatnie 10 notowań kursów EUR i cen złota.
+
+6: Kurs sprzedaży i kupna EUR
+Wykres przedstawiający kurs sprzedaży i kupna EUR z ostatnich 10 notowań.
+
+Projekt "Kursy walut" to narzędzie umożliwiające interaktywną analizę kursów walut i cen złota na podstawie danych z API NBP. Dzięki przejrzystym wizualizacjom i tabelom, użytkownik może łatwo śledzić zmiany na rynku walutowym.
+
+## Row
