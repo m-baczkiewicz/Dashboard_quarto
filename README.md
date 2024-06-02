@@ -3,7 +3,7 @@ Kursy walut
 
 Projekt "Kursy walut" to interaktywny dashboard stworzony w R, który prezentuje aktualne dane na temat kursów walut oraz cen złota. Dane są pobierane z API Narodowego Banku Polskiego (NBP). Dashboard umożliwia wizualizację danych w postaci wykresów oraz tabel, co ułatwia analizę i porównanie kursów walut.
 
-Wymagane pakiety
+#Wymagane pakiety
  - library(httr)
  - library(jsonlite)
  - library(ggplot2)
@@ -13,7 +13,7 @@ Wymagane pakiety
  - library(gridExtra)
  - library(grid)
 
-Struktura projektu:
+#Struktura projektu:
 Projekt jest zorganizowany w formie dashboardu z następującymi sekcjami:
 
 1: Waluty
@@ -35,3 +35,8 @@ Wykresy przedstawiające ostatnie 10 notowań kursów EUR i cen złota.
 Wykres przedstawiający kurs sprzedaży i kupna EUR z ostatnich 10 notowań.
 
 Projekt "Kursy walut" to narzędzie umożliwiające interaktywną analizę kursów walut i cen złota na podstawie danych z API NBP. Dzięki przejrzystym wizualizacjom i tabelom, użytkownik może łatwo śledzić zmiany na rynku walutowym.
+
+
+# Link do filmu promującego projekt
+
+https://uam-my.sharepoint.com/:v:/g/personal/micbac2_st_amu_edu_pl/EWK2zuUcNdpLiI-O2Q1J5ZEB33mvYN512U1G0wCAoj77gw?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&email=jakub.nowosad%40amu.edu.pl&e=884kbE
